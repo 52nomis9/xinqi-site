@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>心奇学习官网</title>
+<style>
+:root{
+  --bg:#eaf4fb; --bg2:#f6fbff; --card:#ffffff;
+  --primary:#5aa7e8; --primary-dark:#3b82c4; --primary-soft:#dceeff;
+  --accent:#ff8f6b; --accent-dark:#f2704e;
+  --text:#1f3a5f; --muted:#6b87a3;
+  --border:#cfe4f5; --red:#e5484d; --green:#3bbf7a; --gold:#d4af37;
+  --shadow:0 6px 22px rgba(90,167,232,.16);
+  --shadow-hover:0 12px 30px rgba(90,167,232,.28);
+  --radius:18px;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--font); color:var(--text);
+  background:radial-gradient(1200px 500px at 10% -10%, #dcedff 0%, transparent 60%),
+             radial-gradient(900px 500px at 100% 0%, #e0f2ff 0%, transparent 55%), var(--bg);
+  min-height:100vh; font-size:16px; line-height:1.55;
+  background-attachment:fixed;
+}
+button{font-family:inherit; cursor:pointer; border:none; background:none;}
+input,select,textarea{font-family:inherit; font-size:16px;}
+.hidden{display:none !important;}
+
+/* ===== 顶栏 ===== */
+.topbar{
+  position:sticky; top:0; z-index:30; display:flex; align-items:center; gap:10px;
+  padding:10px 16px; background:rgba(255,255,255,.72); backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px); border-bottom:1px solid var(--border);
+}
+.tb-left,.tb-right{display:flex; gap:8px; flex:1;}
+.tb-right{justify-content:flex-end;}
+.tb-center{flex:0 0 auto; text-align:center;}
+.sitename{font-size:20px; font-weight:800; letter-spacing:1px; color:var(--primary-dark); text-shadow:0 1px 2px rgba(255,255,255,.6);}
+.topbtn{
+  display:inline-flex; align-items:center; gap:6px; padding:9px 14px; min-height:42px;
+  border-radius:999px; background:#fff; color:var(--primary-dark); font-size:14px; font-weight:700;
+  border:2px solid var(--border); box-shadow:0 3px 10px rgba(90,167,232,.12);
+  transition:transform .16s, box-shadow .16s, background .16s;
+}
+.topbtn:hover{transform:translateY(-2px); box-shadow:var(--shadow-hover); background:var(--primary-soft);}
+.topbtn:active{transform:scale(.94);}
+.topbtn.playing{background:linear-gradient(135deg,#5aa7e8,#7fc0f5); color:#fff; border-color:transparent;}
+.topbtn:disabled{opacity:.45; cursor:not-allowed; transform:none;}
+
+/* ===== 容器 ===== */
+.wrap{max-width:760px; margin:0 auto; padding:18px 16px 100px;}
+
+/* ===== 头像/署名 ===== */
+.profile{text-align:center; margin:14px 0 22px;}
+.avatar{width:104px; height:104px; border-radius:50%; object-fit:cover; border:4px solid #fff;
+  box-shadow:0 8px 22px rgba(90,167,232,.30); background:#dfe9f3;}
+.author{margin-top:10px; font-size:22px; font-weight:800; color:var(--text);}
+
+/* ===== 模块网格 ===== */
+.grid{display:grid; grid-template-columns:repeat(2,1fr); gap:14px;}
+.module{
+  background:var(--card); border:2px solid var(--border); border-radius:var(--radius);
+  padding:16px; box-shadow:var(--shadow); display:flex; flex-direction:row; flex-wrap:wrap;
+  align-items:center; justify-content:flex-start; gap:10px 8px;
+  text-decoration:none; color:var(--text); cursor:pointer; position:relative; overflow:hidden;
+  transition:transform .18s, box-shadow .18s, border-color .18s; min-height:96px;
+}
+.module:hover{transform:translateY(-4px) scale(1.02); box-shadow:var(--shadow-hover); border-color:var(--primary);}
+.module:active{transform:scale(.97);}
+.module::after{content:"›"; position:absolute; right:12px; top:50%; transform:translateY(-50%);
+  font-size:26px; color:var(--primary); opacity:0; transition:opacity .18s;}
+.module:hover::after{opacity:.6;}
+.m-ico{font-size:30px; line-height:1; display:flex; align-items:center; gap:10px; flex:0 0 auto;}
+.m-ico-img{width:34px; height:34px; border-radius:9px; object-fit:cover; border:1px solid var(--border);}
+.m-title{font-size:17px; font-weight:800; flex:0 1 auto;}
+.m-remark{font-size:13px; color:var(--muted); flex-basis:100%; text-align:inherit;}
+.size-1x1{grid-column:span 1; grid-row:span 1;}
+.size-1x2{grid-column:span 1; grid-row:span 2; justify-content:center; align-items:center; text-align:center;}
+.size-2x1{grid-column:span 2; grid-row:span 1;}
+.size-2x2{grid-column:span 2; grid-row:span 2; justify-content:center; align-items:center; text-align:center;}
+.size-2x2 .m-ico{font-size:48px;} .size-2x2 .m-title{font-size:22px;}
+
+/* 模块标题对齐（图标+标题同行时控制横向排布） */
+.module.align-left{text-align:left; justify-content:flex-start;}
+.module.align-center{text-align:center; justify-content:center;}
+.module.align-right{text-align:right; justify-content:flex-end;}
+
+/* 格式模块：分区标题 */
+.module.fmt{grid-column:span 2; flex-direction:row; align-items:center; gap:12px; background:linear-gradient(135deg,#eaf6ff,#f4fbff);
+  border:2px solid var(--primary-soft); box-shadow:none; min-height:0; padding:12px 16px; cursor:default;}
+.module.fmt::after{display:none;}
+.module.fmt:hover{transform:none; box-shadow:none; border-color:var(--primary-soft);}
+.module.fmt .m-ico{font-size:24px;}
+.module.fmt .m-title{font-size:18px; font-weight:800; color:var(--primary-dark); letter-spacing:1px;}
+.module.fmt.align-left{justify-content:flex-start;}
+.module.fmt.align-center{justify-content:center;}
+.module.fmt.align-right{justify-content:flex-end;}
+
+/* 图片模块：图片在上、标题在下 */
+.module.imgmod{flex-direction:column; justify-content:center; align-items:center; text-align:center;}
+.module.imgmod .m-media{width:100%; border-radius:12px; object-fit:cover; max-height:220px; background:#eef4fb;}
+.module.imgmod .m-title{flex-basis:auto;}
+
+/* ===== 图片放大模态 ===== */
+.overlay{position:fixed; inset:0; background:rgba(31,58,95,.55); display:flex; align-items:center; justify-content:center;
+  z-index:200; padding:20px; animation:fade .2s;}
+.overlay .box{background:#fff; border-radius:18px; padding:16px; max-width:92vw; max-height:90vh; overflow:auto; text-align:center;}
+.overlay img{max-width:100%; max-height:78vh; border-radius:12px;}
+.overlay .close{position:absolute; top:14px; right:16px; width:40px; height:40px; border-radius:50%; background:#fff; font-size:20px; font-weight:800; color:var(--muted);}
+
+/* ===== 提示条 ===== */
+.toast{position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px); background:#1f3a5f; color:#fff;
+  padding:12px 20px; border-radius:14px; font-size:14px; opacity:0; transition:.3s; z-index:300; pointer-events:none; max-width:90%; text-align:center;}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+/* ===== 设置页登录弹窗 ===== */
+.login-box{width:330px; max-width:92vw; text-align:center; padding:28px 24px 22px;}
+.login-box h3{margin:0 0 4px; font-size:21px; font-weight:800; color:var(--primary-dark); display:flex; align-items:center; justify-content:center; gap:8px;}
+.login-box .login-sub{font-size:13px; color:var(--muted); margin-bottom:18px;}
+.lfld{text-align:left; margin-bottom:14px;}
+.lfld .lbl{display:block; font-size:13px; font-weight:700; color:var(--muted); margin-bottom:6px; letter-spacing:.5px;}
+.login-box input{width:100%; padding:12px 14px; border-radius:12px; border:2px solid var(--border); background:#fff; color:var(--text); outline:none; transition:.18s; box-shadow:0 1px 3px rgba(90,167,232,.06) inset;}
+.login-box input:focus{border-color:var(--primary); box-shadow:0 0 0 4px rgba(90,167,232,.16);}
+.login-err{min-height:20px; font-size:13px; color:var(--red); font-weight:600;}
+.login-btns{display:flex; gap:10px; margin-top:2px;}
+.login-btns .btn{flex:1; justify-content:center;}
+
+/* ===== 设置页 ===== */
+.settings-wrap{max-width:760px; margin:0 auto; padding:18px 16px 100px;}
+.card{background:var(--card); border-radius:var(--radius); padding:18px; border:2px solid var(--border); box-shadow:var(--shadow); margin-bottom:16px;}
+.card h2{margin:0 0 12px; font-size:19px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.card h2 .tag{font-size:12px; background:var(--primary-soft); color:var(--primary-dark); padding:2px 10px; border-radius:999px; font-weight:600;}
+.fld{display:block; margin-bottom:14px;}
+.fld>span.lbl{display:block; font-weight:700; font-size:14px; margin-bottom:8px; color:var(--muted); letter-spacing:.3px;}
+label.fld,label.chk{display:block; font-weight:700; font-size:14px; margin-bottom:12px;}
+label.chk{display:flex; align-items:center; gap:8px; font-weight:600;}
+input[type=text],input[type=url],input[type=number],select,textarea{
+  width:100%; padding:12px 14px; border-radius:12px; border:2px solid var(--border);
+  background:#fff; color:var(--text); outline:none; transition:.18s;
+  box-shadow:0 1px 3px rgba(90,167,232,.06) inset;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--primary); box-shadow:0 0 0 4px rgba(90,167,232,.16);}
+textarea{resize:vertical; min-height:60px;}
+input[type=checkbox]{width:18px; height:18px; accent-color:#5aa7e8;}
+.opt-row{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; align-items:center;}
+.mini-btn{padding:7px 12px; border-radius:10px; border:2px solid var(--border); background:#fff; font-size:13px; font-weight:700; color:var(--primary-dark);}
+.mini-btn:hover{background:var(--primary-soft);}
+.mini-btn.on{background:var(--primary-soft); border-color:var(--primary);}
+.thumb{width:48px; height:48px; border-radius:10px; object-fit:cover; border:2px solid var(--border); background:#eef4fb;}
+.btn{
+  display:inline-flex; align-items:center; gap:8px; padding:11px 18px; min-height:44px; border-radius:14px;
+  font-size:15px; font-weight:700; border:2px solid transparent; background:#fff; color:var(--primary-dark);
+  border-color:var(--border); box-shadow:0 3px 8px rgba(90,167,232,.10); transition:.16s;
+}
+.btn:hover{transform:translateY(-1px); box-shadow:var(--shadow-hover);}
+.btn.primary{background:linear-gradient(135deg,#5aa7e8,#7fc0f5); color:#fff; border-color:transparent;}
+.btn.accent{background:linear-gradient(135deg,#ff9a76,#ffb38a); color:#fff;}
+.btn.danger{color:#e5484d; border-color:#ffc9cc;}
+.btn.block{width:100%; justify-content:center;}
+.btn.small{padding:8px 12px; min-height:38px; font-size:14px;}
+.seg{display:inline-flex; border:2px solid var(--border); border-radius:12px; overflow:hidden; margin-right:8px;}
+.seg button{padding:8px 14px; font-size:14px; font-weight:700; color:var(--muted); background:#fff;}
+.seg button.on{background:var(--primary-soft); color:var(--primary-dark);}
+
+/* 紧凑选择菜单 & 模块标题对齐（新规则在模块区） */
+.sel-sm{width:auto; min-width:118px; padding:7px 10px; font-size:13px; border-radius:10px; display:inline-block;}
+
+/* 模块编辑卡 */
+.mod-card{border:2px solid var(--border); border-radius:14px; padding:12px; margin-bottom:12px; background:#fbfdff;}
+.mod-head{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px;}
+.mod-head .mtag{font-size:12px; font-weight:800; background:var(--primary-soft); color:var(--primary-dark); padding:3px 9px; border-radius:999px;}
+.mod-head .sz{display:flex; align-items:center; gap:4px; font-size:13px; font-weight:700; color:var(--muted);}
+.mod-head .sz select{width:auto; padding:6px 8px; font-size:13px;}
+.mod-head .spacer{flex:1;}
+.mini{width:34px; height:34px; border-radius:9px; border:2px solid var(--border); background:#fff; font-size:15px; font-weight:800; color:var(--primary-dark);}
+.mini:hover{background:var(--primary-soft);}
+.mini.danger{color:#e5484d; border-color:#ffc9cc;}
+/* 设置卡：标题左 / 录入右 */
+.srow{display:flex; align-items:flex-start; gap:14px; margin-bottom:16px;}
+.srow>.slab{flex:0 0 92px; padding-top:10px; font-size:14px; font-weight:700; color:var(--muted); text-align:right; line-height:1.4;}
+.srow>.sctl{flex:1; min-width:0;}
+.srow .hint{font-size:12px; color:var(--muted); margin-top:4px;}
+@media(max-width:560px){ .srow{flex-direction:column; gap:6px;} .srow>.slab{flex:none; text-align:left; padding-top:0;} }
+
+/* 模块编辑卡：行式紧凑布局 */
+.mod-body{display:flex; flex-direction:column; gap:9px;}
+.mrow{display:flex; align-items:center; gap:10px; min-height:38px;}
+.mrow .mlab{flex:0 0 84px; font-size:13px; font-weight:700; color:var(--muted); text-align:right; line-height:1.35;}
+.mrow .mctl{flex:1; min-width:0; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.mrow .mctl input[type=text],.mrow .mctl input[type=url],.mrow .mctl input[type=file]{flex:1; min-width:140px; padding:9px 11px; font-size:14px; border-radius:10px;}
+.mrow .mctl select{flex:0 0 auto; padding:8px 10px; font-size:13px; border-radius:10px;}
+.mrow .mctl select.sel-sm{width:auto; min-width:104px;}
+.mrow .chkline{display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; white-space:nowrap; color:var(--muted);}
+.mrow .chkline input{width:17px; height:17px; accent-color:#5aa7e8;}
+.emoji-sel{width:auto; min-width:118px; font-size:17px; padding:6px 8px !important;}
+.up-preview{width:56px; height:56px; border-radius:10px; object-fit:cover; border:2px solid var(--border); background:#eef4fb; flex:0 0 auto;}
+.up-info{font-size:13px; color:var(--green); font-weight:600; margin-top:4px;}
+@media(max-width:560px){ .mrow{flex-wrap:wrap;} .mrow .mlab{flex:0 0 100%; text-align:left; padding-top:0;} }
+
+.actions{display:flex; gap:10px; flex-wrap:wrap;}
+
+/* ===== 响应式 ===== */
+@media(max-width:900px){ .sitename{font-size:18px;} }
+@media(max-width:560px){
+  .topbar{padding:8px 10px; gap:6px;}
+  .topbtn{padding:8px 10px; font-size:13px; min-height:38px;}
+  .sitename{font-size:16px;}
+  .grid{grid-template-columns:1fr;}
+  .size-2x1,.size-2x2,.module.fmt{grid-column:span 1;}
+  .avatar{width:84px; height:84px;}
+  .wrap,.settings-wrap{padding:14px 12px 90px;}
+}
+</style>
+<script id="siteDataScript">
+const SITE_DATA = {
+  "siteName":"心奇学习官网",
+  "authorName":"Peppa's Daddy",
+  "avatar":"avatar.png",
+  "background":"__BG_GREEN__",
+  "music":{"source":"url","dataURL":"","url":"music.mp3","filename":"","repeat":"loop"},
+  "modules":[
+    {"id":"m_seed_1","type":"format","size":"full","icon":{"kind":"emoji","value":"📖"},"title":"学习应用","url":"","remark":"","showRemark":false,"titleAlign":"center"},
+    {"id":"m_seed_2","type":"link","size":"2x1","icon":{"kind":"emoji","value":"♫"},"title":"1、心奇学拼音","url":"https://5dde2588021144d4b480f506cbd6e191.gz1.agentos-app.net","remark":"","showRemark":true,"titleAlign":"left"},
+    {"id":"m_seed_3","type":"link","size":"2x1","icon":{"kind":"emoji","value":"🀄"},"title":"2、心奇学字词","url":"https://9489e9f27dd347c8b0d09e5aedd8d465.app.workbuddy.link","remark":"","showRemark":true,"titleAlign":"left"},
+    {"id":"m_seed_4","type":"link","size":"2x1","icon":{"kind":"emoji","value":"🥮"},"title":"3、心奇学古文","url":"https://d3f94fe9b12147ed847a2484a1ccc519.app.workbuddy.link","remark":"","showRemark":true,"titleAlign":"left"},
+    {"id":"m_seed_5","type":"link","size":"2x1","icon":{"kind":"emoji","value":"📝"},"title":"4、心奇学作文","url":"https://fdc61c56d7134237bf99416cc5dd1317.app.workbuddy.link","remark":"","showRemark":true,"titleAlign":"left"},
+    {"id":"m_seed_6","type":"link","size":"2x1","icon":{"kind":"emoji","value":"🔢"},"title":"5、心奇学数学","url":"https://8b94835e3df34ef58a4c89d486869c31.app.workbuddy.link","remark":"","showRemark":true,"titleAlign":"left"},
+    {"id":"m_seed_7","type":"link","size":"2x1","icon":{"kind":"emoji","value":"🔤"},"title":"6、心奇学单词","url":"https://008dfcdd75fc4a30b6900e23ba337b8e.app.workbuddy.link","remark":"","showRemark":true,"titleAlign":"left"},
+    {"id":"m_seed_8","type":"format","size":"full","icon":{"kind":"emoji","value":"😄"},"title":"生活应用","url":"","remark":"","showRemark":false,"titleAlign":"center"},
+    {"id":"m_seed_9","type":"link","size":"2x1","icon":{"kind":"emoji","value":"⚡"},"title":"心奇大挑战","url":"https://ac117b7ba27945679f8f82be7586949d.app.workbuddy.link","remark":"","showRemark":true,"titleAlign":"left"},
+    {"id":"m_seed_10","type":"format","size":"full","icon":{"kind":"emoji","value":"🔥"},"title":"其他网站","url":"","remark":"","showRemark":false,"titleAlign":"center"},
+    {"id":"m_seed_11","type":"link","size":"2x1","icon":{"kind":"favicon","value":"https://www.puyogo.com"},"title":"围棋入门","url":"https://www.puyogo.com","remark":"","showRemark":true,"titleAlign":"left"},
+    {"id":"m_seed_12","type":"link","size":"2x1","icon":{"kind":"favicon","value":"https://www.bilibili.com"},"title":"学拼音视频","url":"https://www.bilibili.com/video/BV1weG7zTEQx/?spm_id_from=333.337.top_right_bar_window_custom_collection.content.click","remark":"","showRemark":true,"titleAlign":"left"},
+    {"id":"m_seed_13","type":"format","size":"full","icon":{"kind":"emoji","value":"👽"},"title":"应用推荐","url":"","remark":"","showRemark":false,"titleAlign":"center"},
+    {"id":"m_seed_14","type":"link","size":"1x1","icon":{"kind":"favicon","value":"https://www.workbuddy.cn"},"title":"注册workbuddy","url":"https://www.workbuddy.cn/events/invite?inviteCode=ew9ykxhyj03fk1l","remark":"","showRemark":true,"titleAlign":"left"},
+    {"id":"m_seed_15","type":"link","size":"1x1","icon":{"kind":"favicon","value":"https://ima.qq.com"},"title":"注册ima知识库","url":"https://ima.qq.com/invitation/storage-assistant/V_5sR6OHwb39V0gf9ffNyg","remark":"","showRemark":true,"titleAlign":"left"},
+    {"id":"m_seed_16","type":"format","size":"full","icon":{"kind":"emoji","value":"📞"},"title":"联系方式","url":"","remark":"","showRemark":false,"titleAlign":"center"},
+    {"id":"m_seed_17","type":"image","size":"1x2","image":{"kind":"url","value":"https://i.postimg.cc/DyZCNnjz/qqhachimi.jpg"},"title":"我的微信","showTitle":true,"titleAlign":"left"},
+    {"id":"m_seed_18","type":"image","size":"1x2","image":{"kind":"url","value":"https://i.postimg.cc/3R5VMVys/qqfish.jpg"},"title":"加入QQ群","showTitle":true,"titleAlign":"left"}
+  ]
+};
+</script>
+</head>
+<body>
+<div id="app"></div>
+<div id="modalRoot"></div>
+<div id="toast" class="toast"></div>
+<audio id="bgm" loop></audio>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ===================== 内置 SVG 资源 ===================== */
+  const AVATAR_DEFAULT = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='#dfe9f3'/><circle cx='50' cy='38' r='18' fill='#9bb4cc'/><path d='M20 88 Q50 58 80 88 Z' fill='#9bb4cc'/></svg>`;
+  const AVATAR_MALE = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='#e7f3ff'/><circle cx='50' cy='38' r='17' fill='#f3c9a0'/><path d='M33 35 Q50 14 67 35 Q60 27 50 27 Q40 27 33 35 Z' fill='#3a3a3a'/><path d='M22 90 Q50 60 78 90 Z' fill='#4a90d9'/></svg>`;
+  const AVATAR_FEMALE = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='#ffe9f2'/><path d='M30 42 Q28 18 50 18 Q72 18 70 42 Q74 32 63 27 Q50 21 37 27 Q26 32 30 42 Z' fill='#7a4a2b'/><circle cx='50' cy='46' r='16' fill='#f3c9a0'/><path d='M22 90 Q50 62 78 90 Z' fill='#e98ab5'/></svg>`;
+  const BG_GREEN = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#bfe9c9'/><stop offset='1' stop-color='#eafaf0'/></linearGradient></defs><rect width='400' height='300' fill='url(#g)'/><circle cx='320' cy='70' r='34' fill='#ffe89a'/><path d='M0 220 Q100 160 200 210 T400 200 V300 H0 Z' fill='#7cc59a'/><path d='M0 250 Q120 210 240 250 T400 245 V300 H0 Z' fill='#4ea578'/></svg>`;
+  const BG_BLUE = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'><defs><linearGradient id='s' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#9fd4ff'/><stop offset='0.58' stop-color='#cdeeff'/><stop offset='0.58' stop-color='#3aa0e0'/><stop offset='1' stop-color='#2b7fc4'/></linearGradient></defs><rect width='400' height='300' fill='url(#s)'/><circle cx='320' cy='60' r='30' fill='#fff6c8'/><ellipse cx='120' cy='70' rx='42' ry='16' fill='#ffffff' opacity='0.85'/><ellipse cx='185' cy='82' rx='30' ry='12' fill='#ffffff' opacity='0.7'/></svg>`;
+  const BG_NIGHT = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'><defs><linearGradient id='n' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#0b1026'/><stop offset='1' stop-color='#1a2348'/></linearGradient></defs><rect width='400' height='300' fill='url(#n)'/><path d='M305 55 a26 26 0 1 0 10 47 a21 21 0 1 1 -10 -47 Z' fill='#ffe9a8'/><g fill='#fff'><circle cx='50' cy='50' r='1.6'/><circle cx='120' cy='30' r='1.2'/><circle cx='200' cy='70' r='1.8'/><circle cx='90' cy='110' r='1.3'/><circle cx='260' cy='40' r='1.4'/><circle cx='340' cy='140' r='1.6'/><circle cx='170' cy='150' r='1.2'/><circle cx='30' cy='160' r='1.5'/></g><path d='M30 230 L52 185 L72 230 L62 205 L82 205' stroke='#fff' fill='none' opacity='0.55'/></svg>`;
+  const BUILTINS = {
+    "__AV_DEFAULT__":AVATAR_DEFAULT, "__AV_MALE__":AVATAR_MALE, "__AV_FEMALE__":AVATAR_FEMALE,
+    "__BG_GREEN__":BG_GREEN, "__BG_BLUE__":BG_BLUE, "__BG_NIGHT__":BG_NIGHT
+  };
+  const svgUrl = s => "data:image/svg+xml," + encodeURIComponent(s);
+  function resolveAsset(v){
+    if(!v) return "";
+    if(v[0]==="_" && BUILTINS[v]) return svgUrl(BUILTINS[v]);
+    return v;
+  }
+
+  /* ===================== 状态 ===================== */
+  let state = { view:"display", data: JSON.parse(JSON.stringify(SITE_DATA)), snapshot:null };
+  const DRAFT_KEY = "xq_site_draft_v1";
+  const getMod = id => state.data.modules.find(m=>m.id===id);
+  const esc = s => String(s==null?"":s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const FALLBACK_ICON = "🔗";
+  function getDomain(u){ try{ return new URL(u).hostname; }catch(e){ try{ return u.replace(/^https?:\/\//,'').split('/')[0]; }catch(e2){ return ""; } } }
+
+  /* ===================== 工具 ===================== */
+  function toastMsg(m){ const t=document.getElementById("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),2600); }
+  function copyText(txt){
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(()=>toastMsg("已复制链接到剪贴板"),()=>fallbackCopy(txt)); }
+    else fallbackCopy(txt);
+  }
+  function fallbackCopy(txt){ const ta=document.createElement("textarea"); ta.value=txt; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); try{document.execCommand("copy"); toastMsg("已复制链接到剪贴板");}catch(e){ toastMsg("复制失败，请手动复制"); } ta.remove(); }
+  function readImageFile(file, maxDim, cb){
+    if(!file) return;
+    const fr=new FileReader();
+    fr.onload=()=>{
+      // GIF 动图：直接保留原始 dataURL，避免 canvas 压平成静态首帧
+      if(file.type==="image/gif" || /\.gif$/i.test(file.name||"")){ cb(fr.result); return; }
+      const img=new Image(); img.onload=()=>{
+        const scale=Math.min(1, maxDim/Math.max(img.width,img.height));
+        const cw=Math.max(1,Math.round(img.width*scale)), ch=Math.max(1,Math.round(img.height*scale));
+        const c=document.createElement("canvas"); c.width=cw; c.height=ch; c.getContext("2d").drawImage(img,0,0,cw,ch);
+        try{ cb(c.toDataURL("image/jpeg",0.85)); }catch(e){ cb(fr.result); }
+      }; img.onerror=()=>cb(fr.result); img.src=fr.result;
+    };
+    fr.readAsDataURL(file);
+  }
+  function readAudioFile(file, cb){ if(!file) return; const fr=new FileReader(); fr.onload=()=>cb(fr.result); fr.readAsDataURL(file); }
+  function autosaveDraft(){ try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(state.data)); }catch(e){} }
+  function uid(){ return "m_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,7); }
+  function fmtSize(b){ if(!b&&b!==0) return ""; if(b<1024) return b+"B"; if(b<1048576) return (b/1024).toFixed(1)+"KB"; return (b/1048576).toFixed(2)+"MB"; }
+
+  /* ===================== 图标解析 ===================== */
+  // favicon 多源回退：依次尝试国内可访问源，全失败回退默认图标
+  window.fbNext = function(img){
+    const urls = (img.dataset.fburls||"").split("|");
+    const i = (+img.dataset.fbidx||0) + 1;
+    if(i < urls.length){ img.dataset.fbidx = i; img.src = urls[i]; }
+    else if(img.outerHTML) img.outerHTML = FALLBACK_ICON;
+  };
+  function faviconImg(d){
+    const ds = encodeURIComponent(d);
+    const urls = [
+      `https://favicon.im/${ds}?larger=true`,
+      `https://icons.duckduckgo.com/ip3/${ds}.ico`,
+      `https://www.google.com/s2/favicons?domain=${ds}&sz=64`
+    ];
+    return `<span class="m-ico"><img class="m-ico-img" src="${urls[0]}" alt="" data-fbidx="0" data-fburls="${esc(urls.join("|"))}" onerror="fbNext(this)"></span>`;
+  }
+  function iconHTML(m){
+    const ic=m.icon||{};
+    if(ic.kind==="emoji") return `<span class="m-ico">${esc(ic.value||"🔗")}</span>`;
+    if(ic.kind==="upload") return `<span class="m-ico"><img class="m-ico-img" src="${esc(ic.value)}" alt=""></span>`;
+    // favicon
+    const d=getDomain(ic.value||"");
+    if(!d) return `<span class="m-ico">${FALLBACK_ICON}</span>`;
+    return faviconImg(d);
+  }
+  function fmtIconHTML(m){
+    const ic=m.icon||{};
+    if(ic.kind==="upload") return `<span class="m-ico"><img class="m-ico-img" src="${esc(ic.value)}" alt=""></span>`;
+    return `<span class="m-ico">${esc(ic.value||"🔥")}</span>`;
+  }
+
+  /* ===================== 展示页渲染 ===================== */
+  function renderDisplay(){
+    state.view="display";
+    const d=state.data;
+    const bg=resolveAsset(d.background);
+    document.body.style.backgroundImage = bg
+      ? `linear-gradient(rgba(255,255,255,.35),rgba(255,255,255,.35)), url("${bg}")`
+      : "";
+    document.body.style.backgroundSize = bg ? "cover" : "";
+    document.body.style.backgroundPosition = "center";
+    // 音乐
+    const bgm=document.getElementById("bgm");
+    const src = d.music.dataURL || d.music.url;
+    bgm.src = src||"";
+    bgm.loop = d.music.repeat!=="once";
+
+    const av = resolveAsset(d.avatar) || svgUrl(AVATAR_DEFAULT);
+    let cards="";
+    d.modules.forEach(m=>{
+      const ta=m.titleAlign||"left";
+      if(m.type==="format"){
+        cards += `<a class="module fmt align-${ta}" data-id="${m.id}">${fmtIconHTML(m)}<span class="m-title">${esc(m.title)}</span></a>`;
+      } else if(m.type==="image"){
+        const im=resolveAsset(m.image?m.image.value:"");
+        const media = im ? `<img class="m-media" src="${esc(im)}" alt="${esc(m.title)}">` : `<div class="m-media" style="padding:24px;color:var(--muted)">（请在设置中上传图片）</div>`;
+        const cap = (m.showTitle && m.title) ? `<div class="m-title" style="margin-top:8px">${esc(m.title)}</div>` : "";
+        cards += `<a class="module imgmod size-${esc(m.size)} align-${ta}" data-id="${m.id}">${media}${cap}</a>`;
+      } else {
+        const remark = (m.showRemark && m.remark) ? `<div class="m-remark">${esc(m.remark)}</div>` : "";
+        cards += `<a class="module size-${esc(m.size)} align-${ta}" data-id="${m.id}" href="${esc(m.url||"#")}" ${m.url?"target='_blank' rel='noopener'":""}>${iconHTML(m)}<span class="m-title">${esc(m.title)}</span>${remark}</a>`;
+      }
+    });
+
+    const app=document.getElementById("app");
+    app.innerHTML = `
+      <div class="topbar">
+        <div class="tb-left">
+          <button class="topbtn" data-action="act-settings">⚙️ 设置</button>
+          <button class="topbtn" id="btnMusic" data-action="act-music">🎵 音乐</button>
+        </div>
+        <div class="tb-center"><span class="sitename">${esc(d.siteName)}</span></div>
+        <div class="tb-right">
+          <button class="topbtn" data-action="act-fav">⭐ 收藏</button>
+          <button class="topbtn" data-action="act-share">🔗 分享</button>
+        </div>
+      </div>
+      <div class="wrap">
+        <div class="profile">
+          <img class="avatar" src="${av}" alt="头像">
+          <div class="author">${esc(d.authorName)}</div>
+        </div>
+        <div class="grid">${cards}</div>
+      </div>`;
+    updateMusicBtn();
+  }
+
+  function updateMusicBtn(){
+    const d=state.data, bgm=document.getElementById("bgm");
+    const btn=document.getElementById("btnMusic");
+    if(!btn) return;
+    const hasSrc = !!(d.music.dataURL || d.music.url);
+    if(!hasSrc){ btn.disabled=true; btn.classList.remove("playing"); btn.textContent="🎵 音乐"; return; }
+    btn.disabled=false;
+    if(bgm && !bgm.paused){ btn.classList.add("playing"); btn.textContent="⏸ 暂停"; }
+    else { btn.classList.remove("playing"); btn.textContent="🎵 音乐"; }
+  }
+
+  /* ===================== 设置页渲染 ===================== */
+  const COMMON_EMOJI = ["🔗","📚","⭐","🔥","❤️","✏️","🎯","💡","📖","🎵","🎮","🎨","🚀","💼","🌱","🍀","🌈","🎁","🏆","⏰","📝","🐯"];
+  function emojiOptions(cur){
+    const list = COMMON_EMOJI.includes(cur) ? COMMON_EMOJI : [cur||"🔗"].concat(COMMON_EMOJI);
+    return list.map(e=>`<option value="${e}" ${cur===e?"selected":""}>${e}</option>`).join("");
+  }
+  function modCardHTML(m){
+    const id=m.id; const ta=m.titleAlign||"left";
+    const row=(lab,ctl)=>`<div class="mrow"><span class="mlab">${lab}</span><div class="mctl">${ctl}</div></div>`;
+    const chk=(f,c,l)=>`<label class="chkline"><input type="checkbox" data-mid="${id}" data-field="${f}" ${c?"checked":""}>${l}</label>`;
+    const alignSel = ()=>`<label class="chkline">对齐<select data-mid="${id}" data-field="titleAlign" class="sel-sm">
+      <option value="left" ${ta==="left"?"selected":""}>左</option>
+      <option value="center" ${ta==="center"?"selected":""}>中</option>
+      <option value="right" ${ta==="right"?"selected":""}>右</option>
+    </select></label>`;
+    const sizeSel = ()=>`<label class="chkline">调整<select data-mid="${id}" data-field="size" class="sel-sm">
+      <option value="1x1" ${m.size==="1x1"?"selected":""}>半行(1×1)</option>
+      <option value="1x2" ${m.size==="1x2"?"selected":""}>半行双高(1×2)</option>
+      <option value="2x1" ${m.size==="2x1"?"selected":""}>整行(2×1)</option>
+      <option value="2x2" ${m.size==="2x2"?"selected":""}>整两行(2×2)</option>
+    </select></label>`;
+    const headCtl = m.type==="format" ? alignSel() : alignSel() + sizeSel();
+    let rows="";
+    if(m.type==="link"){
+      rows = `
+        ${row("图标",`
+          <select data-mid="${id}" data-field="iconKind" class="sel-sm">
+            <option value="emoji" ${m.icon.kind==="emoji"?"selected":""}>Emoji 图标</option>
+            <option value="favicon" ${m.icon.kind==="favicon"?"selected":""}>输出链接</option>
+            <option value="upload" ${m.icon.kind==="upload"?"selected":""}>上传图片</option>
+          </select>
+          ${m.icon.kind==="emoji"
+            ? `<select data-mid="${id}" data-field="iconEmoji" class="emoji-sel">${emojiOptions(m.icon.value)}</select>`
+            : m.icon.kind==="favicon"
+            ? `<input type="text" data-mid="${id}" data-field="iconFavUrl" value="${esc(m.icon.value)}" placeholder="输入网址自动取图标">`
+            : `<input type="file" data-mid="${id}" data-action="modIconUpload" accept="image/*">`}`)}
+        ${row("标题/备注",`
+          <input type="text" data-mid="${id}" data-field="title" value="${esc(m.title)}" placeholder="小标题">
+          <input type="text" data-mid="${id}" data-field="remark" value="${esc(m.remark)}" placeholder="备注（可选）">
+          ${chk("showRemark",m.showRemark,"显示备注")}`)}
+        ${row("网址",`
+          <input type="text" data-mid="${id}" data-field="url" value="${esc(m.url)}" placeholder="https:// 链接地址">
+          <button class="mini" style="width:auto;padding:0 12px;flex:0 0 auto" data-action="copyModUrl" data-mid="${id}" title="复制链接">⧉ 复制</button>`)}
+      `;
+    } else if(m.type==="image"){
+      rows = `
+        ${row("图片来源",`
+          <select data-mid="${id}" data-field="imgKind" class="sel-sm">
+            <option value="upload" ${m.image.kind==="upload"?"selected":""}>上传图片</option>
+            <option value="url" ${m.image.kind==="url"?"selected":""}>外链 URL</option>
+          </select>
+          ${m.image.kind==="upload"
+            ? `<input type="file" data-mid="${id}" data-action="modImgUpload" accept="image/*">
+               ${m.image.value?`<img class="up-preview" src="${esc(m.image.value)}" alt="预览">`:""}`
+            : `<input type="text" data-mid="${id}" data-field="imgUrl" value="${esc(m.image.value)}" placeholder="https://... 图片地址">`}`)}
+        ${row("标题/显示",`
+          <input type="text" data-mid="${id}" data-field="imgTitle" value="${esc(m.title)}" placeholder="标题说明（可选）">
+          ${chk("showTitle",m.showTitle,"显示标题")}`)}
+      `;
+    } else {
+      rows = `
+        ${row("图标",`
+          <select data-mid="${id}" data-field="fmtIconKind" class="sel-sm">
+            <option value="emoji" ${m.icon.kind==="emoji"?"selected":""}>Emoji 图标</option>
+            <option value="upload" ${m.icon.kind==="upload"?"selected":""}>上传图片</option>
+          </select>
+          ${m.icon.kind==="emoji"
+            ? `<select data-mid="${id}" data-field="fmtIconEmoji" class="emoji-sel">${emojiOptions(m.icon.value)}</select>`
+            : `<input type="file" data-mid="${id}" data-action="modFmtIconUpload" accept="image/*">`}`)}
+        ${row("分区标题",`
+          <input type="text" data-mid="${id}" data-field="fmtTitle" value="${esc(m.title)}" placeholder="分区标题">`)}
+      `;
+    }
+    return `<div class="mod-card" data-id="${id}">
+      <div class="mod-head">
+        <span class="mtag">${m.type==="link"?"链接":m.type==="image"?"图片":"分区"}</span>
+        ${headCtl}
+        <span class="spacer"></span>
+        <button class="mini" data-action="modUp" data-mid="${id}" title="上移">↑</button>
+        <button class="mini" data-action="modDown" data-mid="${id}" title="下移">↓</button>
+        <button class="mini danger" data-action="modDel" data-mid="${id}" title="删除">✕</button>
+      </div>
+      <div class="mod-body">${rows}</div>
+    </div>`;
+  }
+
+  function renderSettings(){
+    state.view="settings";
+    const d=state.data;
+    const av=resolveAsset(d.avatar)||svgUrl(AVATAR_DEFAULT);
+    const bg=resolveAsset(d.background);
+    const bgBtns=[["__BG_GREEN__","绿山水"],["__BG_BLUE__","蓝天海"],["__BG_NIGHT__","星空"]].map(([k,l])=>{
+      const on = d.background===k ? "on":"";
+      return `<button class="mini-btn ${on}" data-action="bgPick" data-val="${k}">${l}</button>`;
+    }).join("");
+    const avBtns=[["__AV_MALE__","男"],["__AV_FEMALE__","女"]].map(([k,l])=>{
+      const on = d.avatar===k ? "on":"";
+      return `<button class="mini-btn ${on}" data-action="avPick" data-val="${k}">${l}</button>`;
+    }).join("");
+    const repLoop = d.music.repeat!=="once";
+
+    document.getElementById("app").innerHTML = `
+      <div class="topbar">
+        <div class="tb-left">
+          <button class="topbtn" data-action="act-cancel">↩ 取消修改</button>
+          <button class="topbtn primary" data-action="act-settings">⌂ 主页/返回</button>
+        </div>
+        <div class="tb-center"><span class="sitename">${esc(d.siteName)} · 设置</span></div>
+        <div class="tb-right">
+          <button class="topbtn" data-action="act-fav">⭐ 收藏</button>
+          <button class="topbtn" data-action="act-share">🔗 分享</button>
+        </div>
+      </div>
+      <div class="settings-wrap">
+        <div class="card">
+          <h2>基础信息 <span class="tag">展示内容</span></h2>
+          <div class="srow"><span class="slab">站点名称</span><div class="sctl"><input data-action="f-sitename" value="${esc(d.siteName)}"></div></div>
+          <div class="srow"><span class="slab">作者名称</span><div class="sctl"><input data-action="f-authorname" value="${esc(d.authorName)}"></div></div>
+          <div class="srow"><span class="slab">头像</span><div class="sctl">
+            <input type="file" data-action="avatarUpload" accept="image/png,image/jpeg,image/bmp,image/gif,.png,.jpg,.jpeg,.bmp,.gif">
+            <div class="opt-row">
+              <img class="thumb" src="${av}" alt="">
+              ${avBtns}
+              <button class="mini-btn" data-action="avClear">清除/默认</button>
+            </div>
+            <div class="hint">支持 png/jpg/bmp/gif，或直接选内置男/女头像</div>
+          </div></div>
+          <div class="srow"><span class="slab">背景</span><div class="sctl">
+            <input type="file" data-action="bgUpload" accept="image/png,image/jpeg,image/bmp,image/gif,.png,.jpg,.jpeg,.bmp,.gif">
+            <div class="opt-row">
+              ${bg?`<img class="thumb" src="${bg}" alt="">`:`<span class="muted" style="font-size:13px">当前：纯色背景</span>`}
+              ${bgBtns}
+              <button class="mini-btn" data-action="bgClear">清除</button>
+            </div>
+          </div></div>
+        </div>
+
+        <div class="card">
+          <h2>背景音乐 <span class="tag">可上传或外链</span></h2>
+          <div class="srow"><span class="slab">上传 MP3</span><div class="sctl">
+            <input type="file" data-action="musicUpload" accept="audio/mpeg,.mp3">
+            ${d.music.dataURL?`<div class="up-info">✅ 已上传：${esc(d.music.filename||"本地音乐")}${d.music.size?`（${fmtSize(d.music.size)}）`:""}</div>`:""}
+            <div class="hint">建议 ≤5MB，过大请用下方外链</div>
+          </div></div>
+          <div class="srow"><span class="slab">外链 URL</span><div class="sctl"><input data-action="f-musicurl" value="${esc(d.music.url)}" placeholder="https://.../music.mp3"></div></div>
+          <div class="srow"><span class="slab">播放模式</span><div class="sctl">
+            <div class="seg">
+              <button class="${repLoop?"on":""}" data-action="musicRep" data-val="loop">单曲循环（默认）</button>
+              <button class="${!repLoop?"on":""}" data-action="musicRep" data-val="once">单遍播放</button>
+            </div>
+          </div></div>
+          <div class="muted" style="font-size:13px;margin-left:106px">提示：出于浏览器策略，音乐需点击「🎵 音乐」按钮后才会播放，不会自动播放。</div>
+        </div>
+
+        <div class="card">
+          <h2>模块管理 <span class="tag">可增删/排序</span></h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+            <button class="btn small primary" data-action="addLink">＋ 链接模块</button>
+            <button class="btn small accent" data-action="addImage">＋ 图片模块</button>
+            <button class="btn small" data-action="addFormat">＋ 分区标题</button>
+          </div>
+          <div id="modList">${d.modules.map(modCardHTML).join("")}</div>
+        </div>
+
+        <div class="card">
+          <h2>保存与备份</h2>
+          <div class="actions">
+            <button class="btn primary" data-action="act-save">💾 保存并下载更新文件</button>
+            <button class="btn accent" data-action="act-publish">🚀 发布到线上</button>
+            <button class="btn" data-action="act-export">导出 JSON</button>
+            <button class="btn" data-action="act-import">导入 JSON</button>
+            <button class="btn danger" data-action="act-reset">重置清空</button>
+          </div>
+          <input type="file" id="importFile" accept=".json,application/json" class="hidden">
+          <p class="muted" style="font-size:13px;margin-top:10px">「🚀 发布到线上」把最新内容写入 GitHub 仓库，Pages 更新后对所有访客生效（约 1 分钟）；「保存并下载」仅生成本地文件备用。建议同时「导出 JSON」留底。</p>
+        </div>
+      </div>`;
+  }
+
+  /* ===================== 动作 ===================== */
+  function doAction(a, el){
+    const d=state.data;
+    switch(a){
+      case "act-settings":
+        if(state.view==="display"){ openLogin(); }
+        else { renderDisplay(); }
+        return;
+      case "act-login": {
+        const u=document.getElementById("loginUser"), p=document.getElementById("loginPass"), err=document.getElementById("loginErr");
+        const uv=(u&&u.value.trim())||"", pv=(p&&p.value)||"";
+        if(!uv||!pv){ if(err) err.textContent="请输入账户和密码"; return; }
+        if(uv===LOGIN_USER && pv===LOGIN_PASS){
+          closeModal();
+          state.snapshot=JSON.parse(JSON.stringify(state.data));
+          renderSettings();
+          toastMsg("登录成功 ✅");
+        } else {
+          if(err) err.textContent="❌ 账户或密码错误，请重试";
+          if(p){ p.value=""; p.focus(); }
+        }
+        return;
+      }
+      case "act-cancel":
+        if(state.snapshot){ state.data=JSON.parse(JSON.stringify(state.snapshot)); autosaveDraft(); }
+        renderDisplay(); return;
+      case "act-music": toggleMusic(); return;
+      case "act-fav": copyText(location.href); toastMsg("链接已复制，按 Ctrl/Cmd+D 可收藏本站"); return;
+      case "act-share": openShare(); return;
+      case "copyShare": { const u=document.getElementById("shareUrl"); if(u) copyText(u.value); return; }
+      case "act-save": buildAndDownload(); return;
+      case "act-publish": openPublish(); return;
+      case "act-publish-go": publishToGitHub(); return;
+      case "act-export": exportJSON(); return;
+      case "act-import": document.getElementById("importFile").click(); return;
+      case "act-reset":
+        if(confirm("确定清空所有内容并恢复为空模板？此操作不可撤销。")){
+          state.data = { siteName:"心奇学习官网", authorName:"", avatar:"", background:"", music:{source:"upload",dataURL:"",url:"",filename:"",repeat:"loop"}, modules:[] };
+          autosaveDraft(); renderSettings(); toastMsg("已重置");
+        }
+        return;
+      case "addLink": d.modules.push({id:uid(),type:"link",size:"1x1",icon:{kind:"favicon",value:""},title:"新链接",url:"https://",remark:"",showRemark:true,titleAlign:"left"}); autosaveDraft(); renderSettings(); return;
+      case "addImage": d.modules.push({id:uid(),type:"image",size:"2x1",image:{kind:"upload",value:""},title:"图片说明",showTitle:false,titleAlign:"left"}); autosaveDraft(); renderSettings(); return;
+      case "addFormat": d.modules.push({id:uid(),type:"format",size:"full",icon:{kind:"emoji",value:"🔥"},title:"新分区",url:"",remark:"",showRemark:false,titleAlign:"left"}); autosaveDraft(); renderSettings(); return;
+      case "modUp": moveMod(el.dataset.mid,-1); return;
+      case "modDown": moveMod(el.dataset.mid,1); return;
+      case "modDel":
+        if(confirm("删除该模块？")){ d.modules=d.modules.filter(m=>m.id!==el.dataset.mid); autosaveDraft(); renderSettings(); }
+        return;
+      case "avPick": d.avatar=el.dataset.val; autosaveDraft(); renderSettings(); return;
+      case "avClear": d.avatar=""; autosaveDraft(); renderSettings(); return;
+      case "bgPick": d.background=el.dataset.val; autosaveDraft(); renderSettings(); return;
+      case "bgClear": d.background=""; autosaveDraft(); renderSettings(); return;
+      case "musicRep": d.music.repeat=el.dataset.val; autosaveDraft(); renderSettings(); return;
+      case "copyModUrl": { const m=getMod(el.dataset.mid); if(m&&m.url) copyText(m.url); else toastMsg("请先填写链接网址"); return; }
+      case "modIconUpload": { const m=getMod(el.dataset.mid); readImageFile(el.files[0],512,data=>{ m.icon.value=data; m.icon.kind="upload"; autosaveDraft(); renderSettings(); toastMsg("图标已上传 ✅"); }); return; }
+      case "modImgUpload": { const m=getMod(el.dataset.mid); readImageFile(el.files[0],1024,data=>{ m.image.value=data; m.image.kind="upload"; autosaveDraft(); renderSettings(); toastMsg("图片已上传 ✅"); }); return; }
+      case "modFmtIconUpload": { const m=getMod(el.dataset.mid); readImageFile(el.files[0],256,data=>{ m.icon.value=data; m.icon.kind="upload"; autosaveDraft(); renderSettings(); toastMsg("图标已上传 ✅"); }); return; }
+    }
+  }
+
+  function moveMod(id,dir){
+    const arr=state.data.modules, i=arr.findIndex(m=>m.id===id);
+    const j=i+dir; if(i<0||j<0||j>=arr.length) return;
+    const t=arr[i]; arr[i]=arr[j]; arr[j]=t; autosaveDraft(); renderSettings();
+  }
+
+  function toggleMusic(){
+    const bgm=document.getElementById("bgm"); const d=state.data;
+    const src = d.music.dataURL || d.music.url;
+    if(!src){ toastMsg("尚未设置音乐，请到「设置」添加"); return; }
+    if(bgm.paused){ bgm.play().then(updateMusicBtn).catch(()=>toastMsg("播放失败，请检查音乐链接")); }
+    else { bgm.pause(); updateMusicBtn(); }
+  }
+
+  /* ===================== 表单字段 ===================== */
+  function onField(el){
+    const mid=el.dataset.mid, f=el.dataset.field; if(!mid||!f) return;
+    const m=getMod(mid); if(!m) return;
+    switch(f){
+      case "iconKind": m.icon.kind=el.value; if(el.value==="emoji"&&!m.icon.value)m.icon.value="🔗"; if(el.value==="favicon"&&!m.icon.value)m.icon.value=""; renderSettings(); return;
+      case "iconEmoji": m.icon.value=el.value; break;
+      case "iconFavUrl": m.icon.value=el.value; break;
+      case "title": m.title=el.value; break;
+      case "url": m.url=el.value; break;
+      case "remark": m.remark=el.value; break;
+      case "showRemark": m.showRemark=el.checked; break;
+      case "imgKind": m.image.kind=el.value; if(!m.image.value)m.image.value=""; renderSettings(); return;
+      case "imgUrl": m.image.value=el.value; break;
+      case "imgTitle": m.title=el.value; break;
+      case "showTitle": m.showTitle=el.checked; break;
+      case "fmtIconKind": m.icon.kind=el.value; renderSettings(); return;
+      case "fmtIconEmoji": m.icon.value=el.value; break;
+      case "fmtTitle": m.title=el.value; break;
+      case "size": m.size=el.value; break;
+      case "titleAlign": m.titleAlign=el.value; break;
+    }
+    autosaveDraft();
+  }
+
+  /* ===================== 文件：导入/导出/保存 ===================== */
+  function exportJSON(){
+    const blob=new Blob([JSON.stringify(state.data,null,2)],{type:"application/json"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="site-data.json";
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    toastMsg("已导出 site-data.json");
+  }
+  function importJSON(file){
+    if(!file) return;
+    const fr=new FileReader(); fr.onload=()=>{
+      try{ const obj=JSON.parse(fr.result);
+        if(!obj.modules) throw 0;
+        state.data=obj; autosaveDraft(); renderSettings(); toastMsg("导入成功");
+      }catch(e){ toastMsg("JSON 解析失败，请检查文件"); }
+    }; fr.readAsText(file);
+  }
+
+  function buildHTMLString(){
+    const modalRoot=document.getElementById("modalRoot");
+    const keepModal=modalRoot.innerHTML; // 保留当前弹窗（如发布框），序列化后再恢复
+    renderDisplay(); // 让生成的文件默认以展示页打开
+    const ser='const SITE_DATA = '+JSON.stringify(state.data).replace(/</g,"\\u003c")+';';
+    document.getElementById("siteDataScript").textContent=ser;
+    modalRoot.innerHTML="";
+    const toast=document.getElementById("toast"); if(toast){ toast.className="toast"; toast.textContent=""; }
+    const html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+    modalRoot.innerHTML=keepModal;
+    return html;
+  }
+  function buildAndDownload(){
+    const html=buildHTMLString();
+    const blob=new Blob([html],{type:"text/html"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="index.html";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+    toastMsg("已生成更新文件 index.html，请上传到托管平台");
+  }
+
+  /* ===================== 发布到 GitHub Pages ===================== */
+  const GH_REPO = { owner:"52nomis9", name:"xinqi-site" };
+  const GH_TOKEN_KEY = "xq_gh_token_v1";
+  function openPublish(){
+    let saved="";
+    try{ saved=localStorage.getItem(GH_TOKEN_KEY)||""; }catch(e){}
+    document.getElementById("modalRoot").innerHTML=`<div class="overlay" data-close="1"><div class="box login-box" style="width:400px">
+      <h3>🚀 发布到线上</h3>
+      <div class="login-sub">把当前内容保存并更新到 GitHub Pages，全网访客约 1 分钟后可见</div>
+      <div class="lfld"><span class="lbl">仓库</span><input type="text" value="${GH_REPO.owner}/${GH_REPO.name}" readonly style="background:#f2f7fc"></div>
+      <div class="lfld"><span class="lbl">访问令牌 (Token)</span><input id="pubToken" type="password" autocomplete="off" placeholder="github_pat_... 或 ghp_..." value="${esc(saved)}"></div>
+      <label class="chkline" style="justify-content:flex-start;margin:0 0 6px"><input type="checkbox" id="pubRemember" ${saved?"checked":""}>在本浏览器记住令牌</label>
+      <div class="login-err" id="pubErr"></div>
+      <div class="login-btns">
+        <button class="btn" data-close="1">取 消</button>
+        <button class="btn primary" id="pubGo" data-action="act-publish-go">发 布</button>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:10px;text-align:left;line-height:1.5">令牌仅保存在本浏览器（localStorage），不会写入网站文件。建议使用仅授权本仓库、仅有 Contents 读写权限的 Fine-grained Token。</div>
+    </div></div>`;
+    setTimeout(()=>{ const i=document.getElementById("pubToken"); if(i && !i.value) i.focus(); },60);
+  }
+  async function publishToGitHub(){
+    const token=((document.getElementById("pubToken")||{}).value||"").trim();
+    const setErr=m=>{ const el=document.getElementById("pubErr"); if(el) el.textContent=m; };
+    const setBusy=b=>{ const el=document.getElementById("pubGo"); if(el){ el.disabled=b; el.textContent=b?"发布中…":"发 布"; } };
+    if(!token){ setErr("请输入 GitHub 访问令牌"); return; }
+    setBusy(true); setErr("");
+    const apiUrl=`https://api.github.com/repos/${GH_REPO.owner}/${GH_REPO.name}/contents/index.html`;
+    try{
+      let sha="";
+      const r1=await fetch(apiUrl,{headers:{"Authorization":"Bearer "+token,"Accept":"application/vnd.github+json"}});
+      if(r1.status===200){ sha=(await r1.json()).sha; }
+      else if(r1.status!==404){ throw new Error(r1.status===401||r1.status===403 ? "令牌无效或权限不足（HTTP "+r1.status+"），请检查令牌有效且对本仓库有写权限" : "读取线上文件失败（HTTP "+r1.status+"）"); }
+      const html=buildHTMLString();
+      const b64=btoa(unescape(encodeURIComponent(html)));
+      const r2=await fetch(apiUrl,{
+        method:"PUT",
+        headers:{"Authorization":"Bearer "+token,"Accept":"application/vnd.github+json","Content-Type":"application/json"},
+        body:JSON.stringify({message:"更新心奇学习官网内容",content:b64,sha:sha||undefined})
+      });
+      if(r2.status===200||r2.status===201){
+        const rem=document.getElementById("pubRemember");
+        try{ if(rem&&rem.checked) localStorage.setItem(GH_TOKEN_KEY,token); else localStorage.removeItem(GH_TOKEN_KEY); }catch(e){}
+        closeModal();
+        toastMsg("🚀 发布成功！约 1 分钟后对所有访客生效");
+      } else if(r2.status===401||r2.status===403){
+        throw new Error("令牌无效或权限不足（HTTP "+r2.status+"），Fine-grained Token 需勾选 Contents 读写权限");
+      } else if(r2.status===409){
+        throw new Error("线上文件已在别处更新，请刷新页面重新编辑后再发布");
+      } else {
+        throw new Error("发布失败（HTTP "+r2.status+"）");
+      }
+    }catch(e){
+      setBusy(false);
+      setErr("❌ "+(e.message||"发布失败，请检查网络后重试"));
+      if(state.view!=="settings") renderSettings(); // 恢复编辑视图，弹窗仍在
+    }
+  }
+
+  /* ===================== 设置页登录 ===================== */
+  const LOGIN_USER = "Simon";
+  const LOGIN_PASS = "sml920key";
+  function openLogin(){
+    document.getElementById("modalRoot").innerHTML=`<div class="overlay" data-close="1"><div class="box login-box">
+      <h3>🔐 管理员登录</h3>
+      <div class="login-sub">请输入账户与密码，验证后进入设置页面</div>
+      <div class="lfld"><span class="lbl">账户</span><input id="loginUser" type="text" autocomplete="username" autocapitalize="off" placeholder="请输入账户"></div>
+      <div class="lfld"><span class="lbl">密码</span><input id="loginPass" type="password" autocomplete="current-password" placeholder="请输入密码"></div>
+      <div class="login-err" id="loginErr"></div>
+      <div class="login-btns">
+        <button class="btn" data-close="1">取 消</button>
+        <button class="btn primary" data-action="act-login">登 录</button>
+      </div>
+    </div></div>`;
+    setTimeout(()=>{ const i=document.getElementById("loginUser"); if(i) i.focus(); },60);
+  }
+
+  /* ===================== 模态：分享 / 图片 ===================== */
+  function openShare(){
+    const url=location.href;
+    const qr="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data="+encodeURIComponent(url);
+    const root=document.getElementById("modalRoot");
+    root.innerHTML=`<div class="overlay" data-close="1"><div class="box">
+      <button class="close" data-close="1">✕</button>
+      <h3 style="margin:4px 0 12px">分享「${esc(state.data.siteName)}」</h3>
+      <img src="${qr}" alt="二维码" style="width:220px;height:220px;border-radius:12px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <div style="display:none;color:var(--muted);font-size:13px">（二维码生成需联网，可改用下方复制链接）</div>
+      <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+        <input id="shareUrl" value="${esc(url)}" readonly style="flex:1;padding:9px 10px;border-radius:10px;border:2px solid var(--border)">
+        <button class="btn primary" data-action="copyShare">复制</button>
+      </div>
+    </div></div>`;
+  }
+  function openImageModal(m){
+    const im=resolveAsset(m.image?m.image.value:"");
+    if(!im){ toastMsg("该图片模块尚未设置图片，请到设置上传"); return; }
+    const root=document.getElementById("modalRoot");
+    root.innerHTML=`<div class="overlay" data-close="1"><div class="box">
+      <button class="close" data-close="1">✕</button>
+      <img src="${im}" alt="${esc(m.title)}">
+      ${m.title?`<div style="margin-top:8px;font-weight:700">${esc(m.title)}</div>`:""}
+    </div></div>`;
+  }
+  function closeModal(){ document.getElementById("modalRoot").innerHTML=""; }
+
+  /* ===================== 事件绑定 ===================== */
+  const app=document.getElementById("app");
+  document.addEventListener("click",e=>{
+    // 先执行弹窗内按钮的动作（如登录、复制），再处理关闭弹窗
+    const act=e.target.closest("[data-action]");
+    if(act){ doAction(act.dataset.action, act, e); return; }
+    if(e.target.closest("[data-close]")){ closeModal(); return; }
+    if(state.view==="display"){
+      const mod=e.target.closest(".module");
+      if(mod){
+        const m=getMod(mod.dataset.id);
+        if(!m) return;
+        if(m.type==="image") openImageModal(m);
+        // link 模块本身已是 <a href>，浏览器自动跳转
+      }
+    }
+  });
+  document.addEventListener("input",e=>{ if(e.target.dataset.field) onField(e.target); if(e.target.dataset.action==="f-sitename"){state.data.siteName=e.target.value;autosaveDraft();} if(e.target.dataset.action==="f-authorname"){state.data.authorName=e.target.value;autosaveDraft();} if(e.target.dataset.action==="f-musicurl"){state.data.music.url=e.target.value;autosaveDraft();} });
+  document.addEventListener("change",e=>{
+    const el=e.target, a=el.dataset.action;
+    if(a==="avatarUpload"){ readImageFile(el.files[0],256,d=>{ state.data.avatar=d; autosaveDraft(); renderSettings(); }); return; }
+    if(a==="bgUpload"){ readImageFile(el.files[0],1280,d=>{ state.data.background=d; autosaveDraft(); renderSettings(); }); return; }
+    if(a==="musicUpload"){ const f=el.files[0]; readAudioFile(f, d=>{ state.data.music.dataURL=d; state.data.music.source="upload"; state.data.music.filename=f?f.name:""; state.data.music.size=f?f.size:0; autosaveDraft(); renderSettings(); toastMsg("音乐已上传 ✅"); }); return; }
+    if(a==="importFile"){ importJSON(el.files[0]); return; }
+    if(a==="copyShare"){ copyText(document.getElementById("shareUrl").value); return; }
+    if(a==="modIconUpload"||a==="modImgUpload"||a==="modFmtIconUpload"){ doAction(a, el); return; }
+    if(el.dataset.field) onField(el); // select 走 change
+  });
+
+  // 键盘 Esc 关闭模态；登录/发布弹窗内按回车直接提交
+  document.addEventListener("keydown",e=>{
+    if(e.key==="Escape") closeModal();
+    if(e.key==="Enter" && (e.target.id==="loginUser"||e.target.id==="loginPass")) doAction("act-login");
+    if(e.key==="Enter" && e.target.id==="pubToken") publishToGitHub();
+  });
+
+  /* ===================== 启动 ===================== */
+  function boot(){
+    try{
+      const draft=localStorage.getItem(DRAFT_KEY);
+      if(draft){
+        const obj=JSON.parse(draft);
+        if(obj && obj.modules && JSON.stringify(obj)!==JSON.stringify(state.data)){
+          if(confirm("检测到上次未保存的编辑草稿，是否恢复？")) state.data=obj;
+        }
+      }
+    }catch(e){}
+    renderDisplay();
+  }
+  boot();
+})();
+</script>
+</body>
+</html>
